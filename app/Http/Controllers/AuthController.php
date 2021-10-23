@@ -14,22 +14,23 @@ class AuthController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required:phone|string|email|max:255|unique:users',
-            'phone' => 'required:email|string|max:255|unique:users',
+            // 'phone' => 'required:email|string|max:255|unique:users',
             'password' => 'required|string|min:8'
         ]);
 
         $user = User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
-            'phone' => $validatedData['phone'],
-            'password' => Hash::make($validatedData['password'])
+            // 'phone' => $validatedData['phone'],
+            'password' => Hash::make($validatedData['password']),
+            'generated_url' => strtolower(str_replace(' ', '-', $validatedData['name'])),
         ]);
 
         $token = $user->createToken('auth')->plainTextToken;
 
         return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer'
+            'accessToken' => $token,
+            'tokenType' => 'Bearer'
         ], 201);
     }
 
@@ -46,13 +47,17 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer'
+            'accessToken' => $token,
+            'tokenType' => 'Bearer'
         ]);
     }
 
-    public function userinfo(Request $request)
+    public function get($companyUrl)
     {
-        return $request->user();
+        $user = User::where('generated_url', $companyUrl)->firstOrFail();
+
+        return response()->json([
+            'user' => $user
+        ]);
     }
 }
